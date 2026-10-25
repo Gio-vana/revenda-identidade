@@ -14,8 +14,6 @@ class Papel(StrEnum):
 
 
 class Usuario(Base):
-    """Dados pessoais dos compradores. Existem apenas neste serviço."""
-
     __tablename__ = "usuarios"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

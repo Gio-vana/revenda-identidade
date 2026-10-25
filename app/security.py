@@ -30,8 +30,6 @@ def _int_b64url(numero: int) -> str:
 
 
 class ChaveAssinatura:
-    """Par de chaves RSA que assina os tokens (RS256) e é publicado como JWKS."""
-
     def __init__(self, caminho: Path) -> None:
         if caminho.exists():
             self._privada = serialization.load_pem_private_key(caminho.read_bytes(), password=None)
