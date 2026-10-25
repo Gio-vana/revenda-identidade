@@ -1,6 +1,6 @@
 # Contrato publicado para outros serviços
 
-Qualquer serviço que precise autenticar compradores depende **apenas** deste contrato, nunca do banco de identidade.
+Qualquer serviço que precise autenticar compradores depende apenas deste contrato, nunca do banco de identidade.
 
 | Item | Valor |
 |---|---|

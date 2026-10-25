@@ -1,6 +1,6 @@
 # ADR-001: Serviço de identidade próprio com JWT RS256 e JWKS
 
-**Status:** Aceita
+Status: Aceita
 
 ## Contexto
 
@@ -11,7 +11,7 @@ O registro e a autorização de compradores devem ficar totalmente apartados dos
 Serviço próprio em FastAPI, com banco PostgreSQL exclusivo, que:
 
 - guarda os dados pessoais e o hash bcrypt da senha;
-- emite JWT assinado com **RS256** (chave assimétrica), contendo só `sub` e `papel` além dos campos técnicos;
+- emite JWT assinado com RS256 (chave assimétrica), contendo só `sub` e `papel` além dos campos técnicos;
 - publica a chave pública em `/.well-known/jwks.json`, para que outros serviços validem os tokens sem segredo compartilhado e sem acesso ao banco.
 
 ## Alternativas consideradas
