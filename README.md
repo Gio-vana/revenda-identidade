@@ -5,6 +5,15 @@ Autor(a): Giovana de Fatima Moraes, RM _<seu RM>_
 
 > **A entrega tem dois repositórios.** Este é o **serviço de identidade**: cadastro e autenticação de compradores, **totalmente apartado** do resto da solução, como exige o enunciado. A API da revenda (veículos, vendas, API Gateway e monitoramento) está em [revenda-veiculos](https://github.com/Gio-vana/revenda-veiculos).
 
+## Ambiente publicado
+
+| O quê | Endereço |
+|---|---|
+| Swagger da identidade (pelo API Gateway) | http://34.202.251.69/identidade/docs |
+| Chave pública (JWKS) | http://34.202.251.69/identidade/.well-known/jwks.json |
+
+Disponível até 15/12/2026.
+
 ## 1. O que é
 
 Serviço responsável pelos **dados pessoais** dos compradores e pela emissão das credenciais de acesso:
