@@ -1,7 +1,7 @@
 # Revenda de Veículos: Serviço de Identidade
 
 Trabalho Substitutivo do Tech Challenge, FIAP PósTech Software Architecture (SOAT), Fase 3.
-Autor(a): Giovana de Fatima Moraes, RM _<seu RM>_
+Autor(a): Giovana de Fatima Moraes, RM 366418
 
 > **A entrega tem dois repositórios.** Este é o **serviço de identidade**: cadastro e autenticação de compradores, **totalmente apartado** do resto da solução, como exige o enunciado. A API da revenda (veículos, vendas, API Gateway e monitoramento) está em [revenda-veiculos](https://github.com/Gio-vana/revenda-veiculos).
 
