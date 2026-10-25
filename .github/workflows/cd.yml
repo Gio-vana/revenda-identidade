@@ -1,0 +1,72 @@
+name: CD
+
+# Implanta no servidor a cada merge na main (ou manualmente), depois de o CI passar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-revenda-identidade
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy no servidor
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: producao
+    env:
+      PASTA: revenda-identidade
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configura acesso SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          printf "Host alvo\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n" \
+            "${{ secrets.SSH_HOST }}" "${{ secrets.SSH_USER }}" > ~/.ssh/config
+
+      - name: Copia o código para o servidor
+        run: rsync -az --delete --exclude .git --exclude .env ./ "alvo:$PASTA/"
+
+      - name: Grava o .env com os segredos do GitHub
+        env:
+          IDENTIDADE_DB_PASSWORD: ${{ secrets.IDENTIDADE_DB_PASSWORD }}
+          GESTOR_PASSWORD: ${{ secrets.GESTOR_PASSWORD }}
+        run: |
+          printf 'IDENTIDADE_DB_PASSWORD=%s\nGESTOR_EMAIL=gestor@revenda.com.br\nGESTOR_PASSWORD=%s\nJWT_TTL_MINUTOS=60\nROOT_PATH=/identidade\nIMAGE_TAG=%s\n' \
+            "$IDENTIDADE_DB_PASSWORD" "$GESTOR_PASSWORD" "${GITHUB_SHA::7}" \
+            | ssh alvo "umask 077 && cat > $PASTA/.env"
+
+      - name: Sobe os containers
+        run: |
+          ssh alvo "docker network inspect revenda-net >/dev/null 2>&1 || docker network create revenda-net"
+          ssh alvo "cd $PASTA && docker compose up -d --build --remove-orphans && docker image prune -f"
+
+      - name: Teste de fumaça (JWKS publicado)
+        run: |
+          for i in $(seq 1 30); do
+            if ssh alvo "curl -fsS http://127.0.0.1:8001/.well-known/jwks.json" > /dev/null; then
+              echo "Serviço de identidade respondendo"; exit 0
+            fi
+            sleep 5
+          done
+          ssh alvo "cd $PASTA && docker compose ps && docker compose logs --tail 50 identidade-api"
+          exit 1
+
+      - name: Resumo
+        run: |
+          {
+            echo "### Deploy concluído (${GITHUB_SHA::7})"
+            echo "- Swagger (pelo API Gateway): http://${{ secrets.SSH_HOST }}/identidade/docs"
+          } >> "$GITHUB_STEP_SUMMARY"

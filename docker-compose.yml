@@ -1,0 +1,50 @@
+# Serviço de identidade: API + banco próprio.
+# O banco fica só na rede "interna"; a API também entra na rede compartilhada
+# "revenda-net" para ser alcançada pelo API Gateway e pela API da revenda (JWKS).
+name: revenda-identidade
+
+services:
+  identidade-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: identidade
+      POSTGRES_USER: identidade
+      POSTGRES_PASSWORD: ${IDENTIDADE_DB_PASSWORD:?defina IDENTIDADE_DB_PASSWORD no .env}
+    volumes:
+      - identidade-db:/var/lib/postgresql/data
+    networks: [interna]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identidade -d identidade"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  identidade-api:
+    build: .
+    image: revenda-identidade:${IMAGE_TAG:-local}
+    restart: unless-stopped
+    depends_on:
+      identidade-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://identidade:${IDENTIDADE_DB_PASSWORD}@identidade-db:5432/identidade
+      JWT_PRIVATE_KEY_PATH: /app/keys/jwt-private.pem
+      JWT_TTL_MINUTOS: ${JWT_TTL_MINUTOS:-60}
+      GESTOR_EMAIL: ${GESTOR_EMAIL:-gestor@revenda.com.br}
+      GESTOR_PASSWORD: ${GESTOR_PASSWORD:?defina GESTOR_PASSWORD no .env}
+      ROOT_PATH: ${ROOT_PATH:-/identidade}
+    volumes:
+      - identidade-chaves:/app/keys
+    ports:
+      - "127.0.0.1:8001:8000"
+    networks: [interna, revenda-net]
+
+volumes:
+  identidade-db:
+  identidade-chaves:
+
+networks:
+  interna:
+  revenda-net:
+    external: true
